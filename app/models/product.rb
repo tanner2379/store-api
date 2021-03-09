@@ -24,6 +24,10 @@ class Product < ApplicationRecord
     end
   end
 
+  def first_image_url
+    Rails.application.routes.url_helpers.rails_blob_url(self.images.first, only_path: true)
+  end
+
   def set_slug
     self.slug = self.name.parameterize
   end

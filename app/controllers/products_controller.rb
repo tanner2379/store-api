@@ -1,4 +1,6 @@
 class ProductsController < ApplicationController
+  before_action :require_user, only: [:create, :update, :destroy]
+  before_action :require_vendor, only: [:create, :update, :destroy]
   before_action :set_product, only: [:show, :edit, :update, :destroy]
 
   # GET /products
@@ -59,10 +61,14 @@ class ProductsController < ApplicationController
   # DELETE /products/1
   # DELETE /products/1.json
   def destroy
-    @product.destroy
-    respond_to do |format|
-      format.html { redirect_to products_url, notice: 'Product was successfully destroyed.' }
-      format.json { head :no_content }
+    if @product.destroy
+      render json: {
+        status: :deleted
+      }
+    else
+      render json: {
+        status: 500
+      }
     end
   end
 
