@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_03_04_044754) do
+ActiveRecord::Schema.define(version: 2021_03_09_215818) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -59,6 +59,34 @@ ActiveRecord::Schema.define(version: 2021_03_04_044754) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
+  create_table "invoices", force: :cascade do |t|
+    t.bigint "shipping_address_id", null: false
+    t.datetime "shipped_date"
+    t.string "shipping_company"
+    t.string "tracking_number"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["shipping_address_id"], name: "index_invoices_on_shipping_address_id"
+  end
+
+  create_table "orders", force: :cascade do |t|
+    t.bigint "invoice_id", null: false
+    t.bigint "product_id", null: false
+    t.integer "quantity"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["invoice_id"], name: "index_orders_on_invoice_id"
+    t.index ["product_id"], name: "index_orders_on_product_id"
+  end
+
+  create_table "payment_methods", force: :cascade do |t|
+    t.string "stripe_id"
+    t.bigint "user_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["user_id"], name: "index_payment_methods_on_user_id"
+  end
+
   create_table "product_categories", force: :cascade do |t|
     t.bigint "product_id"
     t.bigint "category_id"
@@ -77,6 +105,19 @@ ActiveRecord::Schema.define(version: 2021_03_04_044754) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
+  create_table "shipping_addresses", force: :cascade do |t|
+    t.integer "user_id"
+    t.string "name"
+    t.string "address_line1"
+    t.string "city"
+    t.string "country"
+    t.string "address_line2"
+    t.string "postal_code"
+    t.string "state"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email"
     t.string "password_digest"
@@ -88,4 +129,8 @@ ActiveRecord::Schema.define(version: 2021_03_04_044754) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "invoices", "shipping_addresses"
+  add_foreign_key "orders", "invoices"
+  add_foreign_key "orders", "products"
+  add_foreign_key "payment_methods", "users"
 end

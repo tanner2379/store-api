@@ -3,7 +3,7 @@ class Product < ApplicationRecord
   before_update :set_slug
   
   has_many :orders
-  validates_presence_of :name
+  validates :name, presence: true, uniqueness: true
   validates_presence_of :description
   validates_presence_of :price
   validate :acceptable_image
