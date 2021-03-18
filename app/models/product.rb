@@ -2,14 +2,14 @@ class Product < ApplicationRecord
   before_create :set_slug
   before_update :set_slug
   
-  has_many :orders
+  has_many :orders, dependent: :delete_all
   validates :name, presence: true, uniqueness: true
   validates_presence_of :description
   validates_presence_of :price
   validate :acceptable_image
 
-  has_many_attached :images
-  has_many :product_categories
+  has_many_attached :images, dependent: :delete_all
+  has_many :product_categories, dependent: :delete_all
   has_many :categories, through: :product_categories
 
   private

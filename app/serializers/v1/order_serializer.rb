@@ -1,4 +1,4 @@
-class OrderSerializer < ActiveModel::Serializer
+class V1::OrderSerializer < ActiveModel::Serializer
   attributes :id, :product_id, :quantity, :product_name
 
 

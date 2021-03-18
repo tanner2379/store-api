@@ -1,4 +1,6 @@
-class InvoicesController < ApplicationController
+class V1::InvoicesController < V1::ApiController
+  before_action :require_user
+  before_action :require_vendor
   def index
     @invoices = Invoice.all.reverse
 

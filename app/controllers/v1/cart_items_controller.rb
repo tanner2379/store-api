@@ -1,4 +1,4 @@
-class CartItemsController < ApplicationController
+class V1::CartItemsController < V1::ApiController
   before_action :set_cart_item, only: [:update, :destroy]
 
   def index
@@ -15,7 +15,7 @@ class CartItemsController < ApplicationController
     if @cart_items.first
       cart_items_transformed = []
       @cart_items.each do |cart_item|
-        image = ImageSerializer.new(cart_item.product.images.first)
+        image = V1::ImageSerializer.new(cart_item.product.images.first)
         cart_item_transformed = {id: cart_item.id, product_name: cart_item.product.name, product_price: cart_item.product.price, quantity: cart_item.quantity, image_url: image.url}
         cart_items_transformed.append(cart_item_transformed)
       end
@@ -41,6 +41,10 @@ class CartItemsController < ApplicationController
     if CartItem.exists?(product_id: params[:product_id])
       if user_signed_in?
         @cart_item = CartItem.where(product_id: params[:product_id], user_id: current_user.id).first
+        if !@cart_item
+          @cart_item = CartItem.where(product_id: params[:product_id], session_id: cookies.encrypted[:cart_tracker]).first
+          @cart_item.update!(user_id: current_user.id, session_id: nil)
+        end
       else
         @cart_item = CartItem.where(product_id: params[:product_id], session_id: cookies.encrypted[:cart_tracker]).first
       end

@@ -1,4 +1,4 @@
-class CategoriesController < ApplicationController
+class V1::CategoriesController < V1::ApiController
   before_action :require_user, only: [:create, :update, :destroy]
   before_action :require_vendor, only: [:create, :update, :destroy]
 
@@ -13,7 +13,7 @@ class CategoriesController < ApplicationController
 
     products = [];
     @category.products.each do |product|
-      products.append(ProductSerializer.new(product))
+      products.append(V1::ProductSerializer.new(product))
     end
     render json: {
       category: @category.name,

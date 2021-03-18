@@ -1,7 +1,7 @@
-class InvoiceSerializer < ActiveModel::Serializer
+class V1::InvoiceSerializer < ActiveModel::Serializer
   attributes :id, :shipped_date, :shipping_company, :tracking_number, :total_price
-  has_many :orders, serializer: OrderSerializer
-  has_one :shipping_address, serializer: ShippingAddressSerializer
+  has_many :orders, serializer: V1::OrderSerializer
+  has_one :shipping_address, serializer: V1::ShippingAddressSerializer
 
   def total_price
     total_price = 0

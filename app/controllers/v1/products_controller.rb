@@ -1,4 +1,4 @@
-class ProductsController < ApplicationController
+class V1::ProductsController < V1::ApiController
   before_action :require_user, only: [:create, :update, :destroy]
   before_action :require_vendor, only: [:create, :update, :destroy]
   before_action :set_product, only: [:show, :edit, :update, :destroy]
@@ -61,6 +61,7 @@ class ProductsController < ApplicationController
   # DELETE /products/1
   # DELETE /products/1.json
   def destroy
+    CartItem.where(product_id: @product.id).delete_all
     if @product.destroy
       render json: {
         status: :deleted

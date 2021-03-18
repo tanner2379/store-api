@@ -1,5 +1,4 @@
-class SessionsController < ApplicationController
-  include CurrentUserConcern
+class V1::SessionsController < V1::ApiController
 
   def create
     user = User
@@ -8,6 +7,15 @@ class SessionsController < ApplicationController
     
     if user
       session[:user_id] = user.id
+
+      cart_items = CartItem.where(session_id: cookies.encrypted[:cart_tracker]);
+
+      if cart_items.first
+        cart_items.each do |cart_item|
+          cart_item.update!(user_id: user.id, session_id: nil);
+        end
+      end
+      
       render json: {
         status: :created,
         logged_in: true,

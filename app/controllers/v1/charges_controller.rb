@@ -1,4 +1,4 @@
-class ChargesController < ApplicationController
+class V1::ChargesController < V1::ApiController
 
   def new
     if user_signed_in?
