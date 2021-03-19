@@ -6,7 +6,7 @@ A really simple online store API built independently to learn how to interact wi
 
 * Rails 6.1.3
 
-* Set your stripe API keys using rails credentials:edit in this format:
+* Set your stripe API keys using rails credentials:edit in this format, no line spaces:
  ```
     development:
     
