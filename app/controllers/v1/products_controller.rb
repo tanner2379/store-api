@@ -99,6 +99,6 @@ class V1::ProductsController < V1::ApiController
 
   # Only allow a list of trusted parameters through.
   def product_params
-    params.permit(:name, :description, :price, images: [])
+    params.permit(:name, :description, :price, :in_stock, images: [])
   end
 end

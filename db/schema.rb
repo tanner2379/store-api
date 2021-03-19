@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_03_09_215818) do
+ActiveRecord::Schema.define(version: 2021_03_18_232147) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -71,12 +71,13 @@ ActiveRecord::Schema.define(version: 2021_03_09_215818) do
 
   create_table "orders", force: :cascade do |t|
     t.bigint "invoice_id", null: false
-    t.bigint "product_id", null: false
+    t.integer "product_id"
+    t.string "product_name"
+    t.float "product_price"
     t.integer "quantity"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["invoice_id"], name: "index_orders_on_invoice_id"
-    t.index ["product_id"], name: "index_orders_on_product_id"
   end
 
   create_table "payment_methods", force: :cascade do |t|
@@ -103,6 +104,7 @@ ActiveRecord::Schema.define(version: 2021_03_09_215818) do
     t.string "slug"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.integer "in_stock"
   end
 
   create_table "shipping_addresses", force: :cascade do |t|
@@ -131,6 +133,5 @@ ActiveRecord::Schema.define(version: 2021_03_09_215818) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "invoices", "shipping_addresses"
   add_foreign_key "orders", "invoices"
-  add_foreign_key "orders", "products"
   add_foreign_key "payment_methods", "users"
 end

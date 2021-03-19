@@ -1,5 +1,5 @@
 class V1::ProductSerializer < ActiveModel::Serializer
-  attributes :id, :name, :description, :price, :slug, :order_count
+  attributes :id, :name, :description, :price, :in_stock, :slug, :order_count
   has_many :images, serializer: V1::ImageSerializer
 
   def order_count

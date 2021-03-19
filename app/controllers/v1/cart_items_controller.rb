@@ -15,8 +15,9 @@ class V1::CartItemsController < V1::ApiController
     if @cart_items.first
       cart_items_transformed = []
       @cart_items.each do |cart_item|
-        image = V1::ImageSerializer.new(cart_item.product.images.first)
-        cart_item_transformed = {id: cart_item.id, product_name: cart_item.product.name, product_price: cart_item.product.price, quantity: cart_item.quantity, image_url: image.url}
+        product = cart_item.product
+        image = V1::ImageSerializer.new(product.images.first)
+        cart_item_transformed = {id: cart_item.id, product_name: product.name, product_price: product.price, product_in_stock: product.in_stock, quantity: cart_item.quantity, image_url: image.url}
         cart_items_transformed.append(cart_item_transformed)
       end
 
@@ -33,9 +34,22 @@ class V1::CartItemsController < V1::ApiController
 
   def create
     if params[:quantity] != ""
-      quantity = params[:quantity]
+      product = Product.find(params[:product_id])
+      warning = nil
+      if product.in_stock >= params[:quantity]
+        quantity = params[:quantity]
+      else
+        quantity = product.in_stock
+        warning = "Unable to fulfill quantity"
+      end
     else
-      quantity = 1
+      if product.in_stock >= 1
+        quantity = 1
+      else
+        render json: {
+          warning: "Out of Stock"
+        }
+      end
     end
 
     if CartItem.exists?(product_id: params[:product_id])
@@ -63,7 +77,8 @@ class V1::CartItemsController < V1::ApiController
     if @cart_item.save
       render json: {
         status: :created,
-        cart_item: @cart_item
+        cart_item: @cart_item,
+        warning: warning
       }
     else
       render json: {
@@ -73,16 +88,17 @@ class V1::CartItemsController < V1::ApiController
   end
 
   def update
-
-    if @cart_item.update(cart_item_params)
-      if @cart_item.quantity = 0
+    if @cart_item.update!(quantity: params[:quantity])
+      if @cart_item.quantity == 0
         @cart_item.destroy
       end
-      flash[:notice] = "Cart item updated"
-      redirect_to "index"
+      render json: {
+        status: 200
+      }
     else
-      flash[:alert] = "Cart Item failed to update"
-      redirect_to "index"
+      render json: {
+        status: 500
+      }
     end
 
   end
@@ -109,5 +125,4 @@ class V1::CartItemsController < V1::ApiController
   def cart_item_params
     params.permit(:user_id, :session_id, :product_id, :quantity)
   end
-
 end

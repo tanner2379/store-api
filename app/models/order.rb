@@ -1,9 +1,9 @@
 class Order < ApplicationRecord
   belongs_to :invoice
-  belongs_to :product
-  validates_presence_of :quantity
+  validates_presence_of :product_id, :product_name, :product_price, :quantity
 
   def total_price
-    self.product.price * self.quantity
+    product = Product.find(self.product_id)
+    product.price * self.quantity
   end
 end

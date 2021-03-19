@@ -52,7 +52,10 @@ class V1::ChargesController < V1::ApiController
     invoice = Invoice.new(shipping_address: shipping_address)
     params[:cart_items].each do |cart_item_id|
       cartItem = CartItem.find(cart_item_id)
-      order = Order.create(invoice: invoice, product: cartItem.product, quantity: cartItem.quantity)
+      product = cartItem.product
+      new_stock = product.in_stock - cartItem.quantity
+      product.update!(in_stock: new_stock)
+      order = Order.create(invoice: invoice, product_id: product.id, product_name: product.name, product_price: product.price, quantity: cartItem.quantity)
       invoice.orders << order
       cartItem.destroy
     end

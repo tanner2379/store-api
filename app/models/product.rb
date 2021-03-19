@@ -2,7 +2,6 @@ class Product < ApplicationRecord
   before_create :set_slug
   before_update :set_slug
   
-  has_many :orders, dependent: :delete_all
   validates :name, presence: true, uniqueness: true
   validates_presence_of :description
   validates_presence_of :price
