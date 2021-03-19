@@ -9,13 +9,19 @@ A really simple online store API built independently to learn how to interact wi
 * Set your stripe API keys using rails credentials:edit in this format:
     
     development:
+    
       stripe:
+      
         publishable_key: pk_test_........
+        
         secret_key: sk_test_.........
 
     production:
+    
       stripe:
+      
         publishable_key: pk_.........
+        
         secret_key: sk_.........
         
         
