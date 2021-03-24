@@ -81,13 +81,9 @@ class V1::ProductsController < V1::ApiController
       @products = Product.where("#{:name} LIKE ?", "%#{query}%")
     end
     if @products || @products == nil
-      respond_to do |format|
-        format.js {render partial: "products/results" }
-      end
+      render json: @products
     else
-      respond_to do |format|
-        format.js {render partial: 'products/not_found'}
-      end
+      render json: @products
     end
   end
 

@@ -14,6 +14,7 @@ Rails.application.routes.draw do
     post "confirm", to: "charges#confirm"
     patch "shipped", to: "invoices#shipped"
     get "customerinfo", to: "charges#new"
+    post "search_product", to: "products#search"
     
     root to: "static#home"
   end
