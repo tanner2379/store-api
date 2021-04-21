@@ -15,6 +15,7 @@ Rails.application.routes.draw do
     patch "shipped", to: "invoices#shipped"
     get "customerinfo", to: "charges#new"
     post "search_product", to: "products#search"
+    get "specific_categories", to: "categories#specific"
     
     root to: "static#home"
   end

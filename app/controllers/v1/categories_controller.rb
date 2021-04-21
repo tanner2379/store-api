@@ -68,6 +68,13 @@ class V1::CategoriesController < V1::ApiController
     }
   end
 
+  def specific
+    @categories = []
+    params[:category_slugs].each do |category_slug|
+      @categories.append(Category.find_by(slug: category_slug))
+    end
+    render json: @categories
+  end
 
   private
 
@@ -76,6 +83,6 @@ class V1::CategoriesController < V1::ApiController
   end
 
   def category_params
-    params.require(:category).permit(:name)
+    params.permit(:name, :image)
   end
 end

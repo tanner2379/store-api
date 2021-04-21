@@ -89,9 +89,6 @@ class V1::CartItemsController < V1::ApiController
 
   def update
     if @cart_item.update!(quantity: params[:quantity])
-      if @cart_item.quantity == 0
-        @cart_item.destroy
-      end
       render json: {
         status: 200
       }

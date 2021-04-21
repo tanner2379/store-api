@@ -4,15 +4,23 @@ class V1::ChargesController < V1::ApiController
     if user_signed_in?
       @shippingOptions = @current_user.shipping_options
       @paymentOptions = @current_user.payment_options
+      @cart_items = CartItem.where(user_id: @current_user.id).map {|cart_item| cart_item.id}
 
       render json: {
         shippingOptions: @shippingOptions,
-        paymentOptions: @paymentOptions
+        paymentOptions: @paymentOptions,
+        cartItems: @cart_items
       }
     else
+      @cart_items = []
+      if cookies.encrypted[:cart_tracker]
+        @cart_items = CartItem.where(session_id: cookies.encrypted[:cart_tracker]).map {|cart_item| cart_item.id}
+      end
+
       render json: {
         shippingOptions: nil,
-        paymentOptions: nil
+        paymentOptions: nil,
+        cartItems: @cart_items
       }
     end
   end
@@ -78,24 +86,39 @@ class V1::ChargesController < V1::ApiController
 
     cart_item_ids.each do |cart_item_id|
       cart_item = CartItem.find(cart_item_id);
+      if cart_item.quantity == 0
+        cart_item.destroy
+      end
       @cart_items.append(cart_item);
       total_price += cart_item.total_price;
     end
 
     shipping_details = nil;
 
-    if params[:shipping_details] && params[:shipping_details] != ""
+    if params[:shipping_details] && params[:shipping_details] != "" && params[:shipping_details] != "Select Saved Address"
       shipping_details = ShippingAddress.find(params[:shipping_details])
     else
-      shipping_details = ShippingAddress.new(
-        name: params[:name],
-        address_line1: params[:address_line1],
-        address_line2: params[:address_line2],
-        city: params[:city],
-        state: params[:state],
-        country: params[:country],
-        postal_code: params[:postal_code]
-      )
+      if params[:billing_as_shipping]
+        shipping_details = ShippingAddress.find_or_create_by(
+          name: params[:billing_name],
+          address_line1: params[:billing_address_line1],
+          address_line2: params[:billing_address_line2],
+          city: params[:billing_city],
+          state: params[:billing_state],
+          country: params[:billing_country],
+          postal_code: params[:billing_postal_code]
+        )
+      else
+        shipping_details = ShippingAddress.find_or_create_by(
+          name: params[:name],
+          address_line1: params[:address_line1],
+          address_line2: params[:address_line2],
+          city: params[:city],
+          state: params[:state],
+          country: params[:country],
+          postal_code: params[:postal_code]
+        )
+      end
 
       if user_signed_in?
         address_match = false
@@ -114,7 +137,7 @@ class V1::ChargesController < V1::ApiController
       end   
     end
 
-    if params[:payment_method] && params[:payment_method] != ""
+    if params[:payment_method] && params[:payment_method] != "" && params[:payment_method] != "Select Saved Payment Method"
       payment_method = PaymentMethod.find(params[:payment_method])
 
       if payment_method.expired?
@@ -127,6 +150,10 @@ class V1::ChargesController < V1::ApiController
         if @payment_intent
           render json: {
             payment_intent: @payment_intent['id'],
+            name: @payment_intent['shipping']['name'],
+            shipping: @payment_intent['shipping']['address'],
+            last_four: payment_method.last4,
+            cart_items: @cart_items,
             status: 200
           }
         else
@@ -152,16 +179,52 @@ class V1::ChargesController < V1::ApiController
             end
           end
 
+          payment_method = nil
           if !last4_match
-            payment_method = Stripe::PaymentMethod.create({
-              type: 'card',
-              card: {
-                number: payment[:card_number],
-                exp_month: payment[:card_expires_month],
-                exp_year: payment[:card_expires_year],
-                cvc: payment[:card_cvv],
-              },
-            })
+            if params[:billing_email] != ""
+              payment_method = Stripe::PaymentMethod.create({
+                type: 'card',
+                card: {
+                  number: payment[:card_number],
+                  exp_month: payment[:card_expires_month],
+                  exp_year: payment[:card_expires_year],
+                  cvc: payment[:card_cvv],
+                },
+                billing_details: {
+                  address: {
+                    city: params[:billing_city],
+                    country: params[:billing_country],
+                    line1: params[:billing_address_line1],
+                    line2: params[:billing_address_line2],
+                    postal_code: params[:billing_postal_code],
+                    state: params[:billing_state]
+                  },
+                  email: params[:billing_email],
+                  name: params[:billing_name],
+                }
+              })
+            else
+              payment_method = Stripe::PaymentMethod.create({
+                type: 'card',
+                card: {
+                  number: payment[:card_number],
+                  exp_month: payment[:card_expires_month],
+                  exp_year: payment[:card_expires_year],
+                  cvc: payment[:card_cvv],
+                },
+                billing_details: {
+                  address: {
+                    city: params[:billing_city],
+                    country: params[:billing_country],
+                    line1: params[:billing_address_line1],
+                    line2: params[:billing_address_line2],
+                    postal_code: params[:billing_postal_code],
+                    state: params[:billing_state]
+                  },
+                  name: params[:billing_name],
+                }
+              })
+            end
 
             if !@current_user.stripe_id
               customer = Stripe::Customer.create(email: @current_user.email, payment_method: payment_method,
@@ -177,6 +240,10 @@ class V1::ChargesController < V1::ApiController
             if @payment_intent
               render json: {
                 payment_intent: @payment_intent['id'],
+                name: @payment_intent['shipping']['name'],
+                shipping: @payment_intent['shipping']['address'],
+                last_four: payment_method.card.last4,
+                cart_items: @cart_items,
                 status: 200
               }
             else
@@ -185,19 +252,58 @@ class V1::ChargesController < V1::ApiController
               }
             end
           else
-            payment_method = Stripe::PaymentMethod.create({
-              type: 'card',
-              card: {
-                number: payment[:card_number],
-                exp_month: payment[:card_expires_month],
-                exp_year: payment[:card_expires_year],
-                cvc: payment[:card_cvv],
-              },
-            })
+            if params[:billing_email] != ""
+              payment_method = Stripe::PaymentMethod.create({
+                type: 'card',
+                card: {
+                  number: payment[:card_number],
+                  exp_month: payment[:card_expires_month],
+                  exp_year: payment[:card_expires_year],
+                  cvc: payment[:card_cvv],
+                },
+                billing_details: {
+                  address: {
+                    city: params[:billing_city],
+                    country: params[:billing_country],
+                    line1: params[:billing_address_line1],
+                    line2: params[:billing_address_line2],
+                    postal_code: params[:billing_postal_code],
+                    state: params[:billing_state]
+                  },
+                  email: params[:billing_email],
+                  name: params[:billing_name],
+                }
+              })
+            else
+              payment_method = Stripe::PaymentMethod.create({
+                type: 'card',
+                card: {
+                  number: payment[:card_number],
+                  exp_month: payment[:card_expires_month],
+                  exp_year: payment[:card_expires_year],
+                  cvc: payment[:card_cvv],
+                },
+                billing_details: {
+                  address: {
+                    city: params[:billing_city],
+                    country: params[:billing_country],
+                    line1: params[:billing_address_line1],
+                    line2: params[:billing_address_line2],
+                    postal_code: params[:billing_postal_code],
+                    state: params[:billing_state]
+                  },
+                  name: params[:billing_name],
+                }
+              })
+            end
             @payment_intent = create_payment(total_price, payment_method.id, shipping_details)
             if @payment_intent
               render json: {
                 payment_intent: @payment_intent['id'],
+                name: @payment_intent['shipping']['name'],
+                shipping: @payment_intent['shipping']['address'],
+                last_four: payment_method.card.last4,
+                cart_items: @cart_items,
                 status: 200
               }
             else
@@ -217,9 +323,19 @@ class V1::ChargesController < V1::ApiController
             },
           })
           @payment_intent = create_payment(total_price, payment_method.id, shipping_details)
+
+          if params[:create_account] && !User.exists?(email: params[:billing_email])
+            customer = Stripe::Customer.create(email: params[:billing_email], payment_method: payment_method,
+              invoice_settings: {default_payment_method: payment_method,},)
+            User.create!(name: params[:billing_name], email: params[:billing_email], password: params[:password], password_confirmation: params[:password_confirmation], stripe_id: customer.id )
+          end
+
           if @payment_intent
             render json: {
               payment_intent: @payment_intent['id'],
+              name: @payment_intent['shipping']['name'],
+              shipping: @payment_intent['shipping']['address'],
+              last_four: payment_method.card.last4,
               status: 200
             }
           else
