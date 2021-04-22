@@ -1,26 +1,45 @@
 class V1::ChargesController < V1::ApiController
 
   def new
+    cart_items_transformed = []
     if user_signed_in?
       @shippingOptions = @current_user.shipping_options
       @paymentOptions = @current_user.payment_options
-      @cart_items = CartItem.where(user_id: @current_user.id).map {|cart_item| cart_item.id}
+      @cart_items = CartItem.where(user_id: @current_user.id)
+
+      if @cart_items.first
+        @cart_items.each do |cart_item|
+          product = cart_item.product
+          image = V1::ImageSerializer.new(product.images.first)
+          cart_item_transformed = {id: cart_item.id, product_name: product.name, product_price: product.price, product_in_stock: product.in_stock, quantity: cart_item.quantity, image_url: image.url}
+          cart_items_transformed.append(cart_item_transformed)
+        end
+      end
 
       render json: {
         shippingOptions: @shippingOptions,
         paymentOptions: @paymentOptions,
-        cartItems: @cart_items
+        cartItems: cart_items_transformed
       }
     else
       @cart_items = []
       if cookies.encrypted[:cart_tracker]
         @cart_items = CartItem.where(session_id: cookies.encrypted[:cart_tracker]).map {|cart_item| cart_item.id}
+
+        if @cart_items.first
+          @cart_items.each do |cart_item|
+            product = cart_item.product
+            image = V1::ImageSerializer.new(product.images.first)
+            cart_item_transformed = {id: cart_item.id, product_name: product.name, product_price: product.price, product_in_stock: product.in_stock, quantity: cart_item.quantity, image_url: image.url}
+            cart_items_transformed.append(cart_item_transformed)
+          end
+        end
       end
 
       render json: {
         shippingOptions: nil,
         paymentOptions: nil,
-        cartItems: @cart_items
+        cartItems: cart_items_transformed,
       }
     end
   end
@@ -89,7 +108,11 @@ class V1::ChargesController < V1::ApiController
       if cart_item.quantity == 0
         cart_item.destroy
       end
-      @cart_items.append(cart_item);
+      product = cart_item.product
+      image = V1::ImageSerializer.new(product.images.first)
+      cart_item_transformed = {id: cart_item.id, product_name: product.name, product_price: product.price, quantity: cart_item.quantity, image_url: image.url}
+      @cart_items.append(cart_item_transformed);
+
       total_price += cart_item.total_price;
     end
 
