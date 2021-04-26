@@ -22,8 +22,6 @@ class CartItem < ApplicationRecord
   def must_have_either_user_id_or_session_id
     if !user_id && !session_id
       errors.add(:id, "must have user_id or session_id")
-    elsif user_id && session_id
-      errors.add(:id, "can't have both user_id and session_id")
     end
   end
 end

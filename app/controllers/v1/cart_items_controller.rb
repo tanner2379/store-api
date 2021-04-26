@@ -57,7 +57,7 @@ class V1::CartItemsController < V1::ApiController
         @cart_item = CartItem.where(product_id: params[:product_id], user_id: current_user.id).first
         if !@cart_item
           @cart_item = CartItem.where(product_id: params[:product_id], session_id: cookies.encrypted[:cart_tracker]).first
-          @cart_item.update!(user_id: current_user.id, session_id: nil)
+          @cart_item.update!(user_id: current_user.id)
         end
       else
         @cart_item = CartItem.where(product_id: params[:product_id], session_id: cookies.encrypted[:cart_tracker]).first

@@ -12,7 +12,7 @@ class V1::SessionsController < V1::ApiController
 
       if cart_items.first
         cart_items.each do |cart_item|
-          cart_item.update!(user_id: user.id, session_id: nil);
+          cart_item.update!(user_id: user.id);
         end
       end
       
