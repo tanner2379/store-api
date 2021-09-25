@@ -2,9 +2,9 @@ class V1::RegistrationsController < V1::ApiController
   before_action :set_user, only: [:show, :edit, :update, :destroy]
 
   def create
-    user = User.create!(user_params);
+    user = User.new(user_params);
 
-    if user
+    if user.save
       session[:user_id] = user.id
       render json: {
         status: :created,
@@ -12,7 +12,8 @@ class V1::RegistrationsController < V1::ApiController
       }
     else
       render json: {
-        status: 500
+        status: 500,
+        errors: user.errors.full_messages
       }
     end
   end
@@ -25,7 +26,8 @@ class V1::RegistrationsController < V1::ApiController
       }
     else
       render json: {
-        status: 500
+        status: 500,
+        errors: @user.errors.full_messages
       }
     end
   end

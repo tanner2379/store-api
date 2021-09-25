@@ -23,7 +23,8 @@ class V1::SessionsController < V1::ApiController
       }
     else
       render json: {
-        status: 401
+        status: 401,
+        errors: ['Username or Password Incorrect']
       }
     end
   end
